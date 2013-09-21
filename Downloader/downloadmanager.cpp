@@ -4,17 +4,19 @@
 #include <QFile>
 #include <QDir>
 #include <QApplication>
-#include <QDebug>
 
 DownloadManager::DownloadManager(QObject *parent) :
     QObject(parent)
 {
     rangeMin = rangeMax = 0;
-    nonExists = 0;
     maxFilesInFolder = 1000;
+    maxRequests = 16;
+
     QObject::connect(&net,SIGNAL(finished(QNetworkReply*)),this,SLOT(requestFinished(QNetworkReply*)));
-    storage.mkpath(QDir::currentPath() + QDir::separator() + "storage");
-    storage.setPath(QDir::currentPath() + QDir::separator() + "storage");
+    storage.setPath(QDir::currentPath());
+    storage.mkpath("storage");
+    storage.cd("storage");
+    storage.mkpath("0");
 }
 
 void DownloadManager::setRange(int min, int max)
@@ -56,9 +58,13 @@ QString DownloadManager::getBaseUrl() const
 void DownloadManager::doIt()
 {
     if(baseurl.isEmpty()) return;
+    runnedRequests = 0;
+    finishedRequests = 0;
     for(int i=rangeMin;i<=rangeMax;++i)
     {
+        while(runnedRequests>=maxRequests) QApplication::processEvents();
         net.get(QNetworkRequest(QUrl(baseurl.arg(i))))->setProperty("id",i);
+        ++runnedRequests;
         QApplication::processEvents();
     }
 }
@@ -78,23 +84,25 @@ void DownloadManager::stop()
 void DownloadManager::requestFinished(QNetworkReply *reply)
 {
     reply->deleteLater();
+    --runnedRequests;
     if(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt()!=200)
     {
-        ++nonExists;
         emit requestEnd(false);
         return;
     }
     QByteArray data = reply->readAll();
     if(data.at(208)=='r')
     {
-        ++nonExists;
         emit requestEnd(false);
         return;
     }
-
+    ++finishedRequests;
     int id = reply->property("id").toInt();
-    int dirId = (id-rangeMin)/maxFilesInFolder;
-    if((id-rangeMin)%maxFilesInFolder==0) storage.mkpath(QString::number(dirId));
+    int dirId = finishedRequests/maxFilesInFolder;
+    if(finishedRequests%maxFilesInFolder==0)
+    {
+        storage.mkpath(QString::number(dirId));
+    }
     QFile f(storage.path()+QDir::separator()+QString::number(dirId)+QDir::separator()+QString::number(id));
     f.open(QIODevice::WriteOnly);
     f.write(data);

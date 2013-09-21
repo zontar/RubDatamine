@@ -29,8 +29,8 @@ private:
     int maxRequests;
     int runnedRequests;
     QDir storage;
-    int nonExists;
     int maxFilesInFolder;
+    int finishedRequests;
 
 signals:
     void requestEnd(bool isFounded);

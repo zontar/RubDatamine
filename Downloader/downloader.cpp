@@ -21,17 +21,17 @@ Downloader::~Downloader()
 void Downloader::on_pbGo_clicked()
 {
     elapsedTime = prevFoundedCount = finishedCount = foundedCount = notFoundedCount = 0;
-    ui->leTotal->setText(QString::number(totalCount));
     int first = ui->leFirstPost->text().toInt();
     int last = ui->leLastPost->text().toInt();
     totalCount = last-first+1;
+    ui->leTotal->setText(QString::number(totalCount));
     timer.start();
     m.doIt(first,last);
 }
 
 void Downloader::on_pbStop_clicked()
 {
-    timer.stop();
+ //   timer.stop();
     m.stop();
 }
 
