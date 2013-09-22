@@ -7,7 +7,7 @@ Downloader::Downloader(QWidget *parent) :
 {
 
     ui->setupUi(this);
-    m.setBaseUrl("http://rub.altai.su/showpost.php?p=%1");
+    m.setBaseUrl("http://rub.altai.su/showthread.php?t=%1");
     timer.setInterval(1000);
     connect(&m,SIGNAL(requestEnd(bool)),this,SLOT(requestEnded(bool)));
     connect(&timer,SIGNAL(timeout()),this,SLOT(onTimer()));
@@ -31,7 +31,7 @@ void Downloader::on_pbGo_clicked()
 
 void Downloader::on_pbStop_clicked()
 {
- //   timer.stop();
+    timer.stop();
     m.stop();
 }
 

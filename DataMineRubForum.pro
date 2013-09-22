@@ -1,4 +1,6 @@
 TEMPLATE = subdirs
 
 SUBDIRS += \
-    Downloader
+    Downloader \
+    BDMaker
+
