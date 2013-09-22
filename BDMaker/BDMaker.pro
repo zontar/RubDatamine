@@ -16,13 +16,15 @@ SOURCES += main.cpp\
         bdmaker.cpp \
     postparser.cpp \
     userparser.cpp \
-    sectionparser.cpp
+    sectionparser.cpp \
+    threadparser.cpp
 
 HEADERS  += bdmaker.h \
     postparser.h \
     userparser.h \
     ../common/common.h \
-    sectionparser.h
+    sectionparser.h \
+    threadparser.h
 
 FORMS    += bdmaker.ui
 

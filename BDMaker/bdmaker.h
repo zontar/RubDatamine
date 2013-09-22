@@ -4,7 +4,7 @@
 #include <QMainWindow>
 #include <QtSql>
 #include <QTime>
-#include "sectionparser.h"
+#include "threadparser.h"
 
 namespace Ui {
 class BDMaker;
@@ -20,7 +20,7 @@ public:
 
 private:
     Ui::BDMaker *ui;
-    SectionParser parser;
+    ThreadParser parser;
     QTimer timer;
     int elapsedTime;
     int finishedRequests;

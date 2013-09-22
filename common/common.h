@@ -22,3 +22,13 @@ struct SectionInfo
     int parent;
     int threads;
 };
+
+struct ThreadInfo
+{
+    int id;
+    QString name;
+    int section;
+    int author;
+    QDateTime create;
+    int posts;
+};
