@@ -7,7 +7,8 @@ BDMaker::BDMaker(QWidget *parent) :
     ui(new Ui::BDMaker)
 {
     ui->setupUi(this);
-    createBD();
+    userParser.parse();
+ //   createBD();
 }
 
 BDMaker::~BDMaker()
@@ -31,7 +32,7 @@ void BDMaker::createBD()
     qDebug() << query.exec("CREATE TABLE \"Posts\" (\"key\" INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE, \"id\" INTEGER UNIQUE, \"author\" INTEGER, \"thread\" INTEGER, \"time\" INTEGER, \"likes\" INTEGER, \"text\" TEXT)");
     qDebug() << query.exec("CREATE TABLE \"Sections\" (\"key\" INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE, \"id\" INTEGER UNIQUE, \"name\" TEXT, \"parent\" INTEGER, \"threads\" INTEGER)");
     qDebug() << query.exec("CREATE TABLE \"Threads\" (\"key\" INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE, \"id\" INTEGER UNIQUE, \"name\" TEXT, \"section\" INTEGER, \"author\" TEXT, \"create\" INTEGER, \"posts\" INTEGER)");
-    qDebug() << query.exec("CREATE TABLE \"Users\" (\"key\" INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE, \"id\" INTEGER UNIQUE, \"nickname\" TEXT, \"create\" INTEGER, \"birth\" INTEGER, \"type\" INTEGER, \"views\" INTEGER, \"likesput\" INTEGER, \"likesgot\" INTEGER, \"posts\" INTEGER, \"prd\" REAL, \"lastactivity\" INTEGER)");
+    qDebug() << query.exec("CREATE TABLE \"Users\" (\"key\" INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE, \"id\" INTEGER UNIQUE, \"nickname\" TEXT, \"create\" INTEGER, \"birth\" INTEGER, \"views\" INTEGER, \"likesput\" INTEGER, \"likesgot\" INTEGER, \"posts\" INTEGER, \"prd\" REAL, \"lastactivity\" INTEGER)");
     qDebug() << query.exec("CREATE INDEX \"PostIdIdx\" ON \"Posts\" (\"id\")");
     qDebug() << query.exec("CREATE INDEX \"SectionsIdIdx\" ON \"Sections\" (\"id\")");
     qDebug() << query.exec("CREATE INDEX \"ThreadIdIdx\" ON \"Threads\" (\"id\")");

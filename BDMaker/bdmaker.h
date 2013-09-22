@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QtSql>
 #include "postparser.h"
+#include "userparser.h"
 
 namespace Ui {
 class BDMaker;
@@ -19,7 +20,8 @@ public:
 
 private:
     Ui::BDMaker *ui;
-    PostParser postParser;
+ //   PostParser postParser;
+    UserParser userParser;
     void createBD();
 };
 

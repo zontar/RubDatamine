@@ -19,6 +19,9 @@ SOURCES += main.cpp\
 
 HEADERS  += bdmaker.h \
     postparser.h \
-    userparser.h
+    userparser.h \
+    ../common/common.h
 
 FORMS    += bdmaker.ui
+
+INCLUDEPATH += ../common
