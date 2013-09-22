@@ -15,12 +15,14 @@ TEMPLATE = app
 SOURCES += main.cpp\
         bdmaker.cpp \
     postparser.cpp \
-    userparser.cpp
+    userparser.cpp \
+    sectionparser.cpp
 
 HEADERS  += bdmaker.h \
     postparser.h \
     userparser.h \
-    ../common/common.h
+    ../common/common.h \
+    sectionparser.h
 
 FORMS    += bdmaker.ui
 

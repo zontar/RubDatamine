@@ -13,5 +13,12 @@ struct UserInfo
     int posts;
     double ppd;
     QDateTime lastactivity;
+};
 
+struct SectionInfo
+{
+    int id;
+    QString name;
+    int parent;
+    int threads;
 };
