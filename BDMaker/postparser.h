@@ -9,9 +9,9 @@ class PostParser : public QObject
     Q_OBJECT
 public:
     explicit PostParser(QObject *parent = 0);
+    void parse();
 private:
     QSqlDatabase db;
-    void recreate();
 
 signals:
 

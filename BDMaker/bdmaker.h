@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QtSql>
+#include <QTime>
 #include "postparser.h"
 #include "userparser.h"
 
@@ -22,7 +23,16 @@ private:
     Ui::BDMaker *ui;
  //   PostParser postParser;
     UserParser userParser;
+    QTimer timer;
+    int elapsedTime;
+    int finishedRequests;
+    int totalCount;
     void createBD();
+protected slots:
+    void onTimer();
+    void on_pbGo_clicked();
+    void on_pbStop_clicked();
+    void requestFinished();
 };
 
 #endif // BDMAKER_H

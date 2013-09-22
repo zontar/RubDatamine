@@ -17,6 +17,7 @@ private:
     void parseFile(const QString &fileName);
 
 signals:
+    void finished();
 
 public slots:
 

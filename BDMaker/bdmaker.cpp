@@ -8,7 +8,10 @@ BDMaker::BDMaker(QWidget *parent) :
     ui(new Ui::BDMaker)
 {
     ui->setupUi(this);
-    userParser.parse();
+    timer.setInterval(1000);
+    connect(&userParser,SIGNAL(finished()),this,SLOT(requestFinished()));
+    connect(&timer,SIGNAL(timeout()),this,SLOT(onTimer()));
+
 //    createBD();
 }
 
@@ -39,5 +42,36 @@ void BDMaker::createBD()
         query.exec("CREATE INDEX \"ThreadNameIdx\" ON \"Threads\" (\"name\")");
         query.exec("CREATE INDEX \"UsersIdIdx\" ON \"Users\" (\"id\")");
         query.exec("CREATE INDEX \"UsersNicknameIdx\" ON \"Users\" (\"nickname\")");
-    db.close();
+        db.close();
+}
+
+void BDMaker::onTimer()
+{
+    int current = finishedRequests;
+    ++elapsedTime;
+    int rps = current/elapsedTime;
+    ui->leElapsed->setText(QString::number(elapsedTime));
+    ui->leRPS->setText(QString::number(rps));
+    ui->leRemaining->setText(QString::number((totalCount-current)/rps));
+}
+
+void BDMaker::on_pbGo_clicked()
+{
+    totalCount = 1748;
+    ui->leTotal->setText(QString::number(totalCount));
+    elapsedTime = finishedRequests = 0;
+    timer.start();
+    userParser.parse();
+}
+
+void BDMaker::on_pbStop_clicked()
+{
+    timer.stop();
+}
+
+void BDMaker::requestFinished()
+{
+    ++finishedRequests;
+    ui->leParsed->setText(QString("%1 (%2%)").arg(finishedRequests).arg(((double)finishedRequests/totalCount)*100));
+    if(totalCount==finishedRequests) on_pbStop_clicked();
 }

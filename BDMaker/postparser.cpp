@@ -6,16 +6,15 @@ PostParser::PostParser(QObject *parent) :
 {
     db = QSqlDatabase::addDatabase("QSQLITE");
     db.setDatabaseName("db.sqlite");
+}
+
+void PostParser::parse()
+{
     if(!db.open())
     {
         qDebug() << "cannot open db.sqlite";
         return;
     }
     qDebug() << "successfully open db.sqlite";
-}
-
-void PostParser::recreate()
-{
-    QSqlQuery query;
-//    query.exec("CREATE TABLE (x INTEGER PRIMARY KEY ASC, y, z);")
+    db.close();
 }

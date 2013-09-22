@@ -5,7 +5,6 @@ Downloader::Downloader(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::Downloader)
 {
-
     ui->setupUi(this);
     m.setBaseUrl("http://rub.altai.su/showthread.php?t=%1");
     timer.setInterval(1000);
@@ -59,6 +58,6 @@ void Downloader::onTimer()
     int rps = finishedCount/elapsedTime;
     ui->leElapsed->setText(QString::number(elapsedTime));
     ui->leRPS->setText(QString::number(rps));
-    ui->leRemaining->setText(QString::number((totalCount-finishedCount)/rps));
+    ui->leRemaining->setText(QString::number((current-finishedCount)/rps));
     prevFoundedCount = current;
 }

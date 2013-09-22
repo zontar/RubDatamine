@@ -3,6 +3,7 @@
 #include <QFile>
 #include <QDir>
 #include <QTextCodec>
+#include <QApplication>
 #include <QDebug>
 
 UserParser::UserParser(QObject *parent) :
@@ -10,7 +11,6 @@ UserParser::UserParser(QObject *parent) :
 {
     db = QSqlDatabase::addDatabase("QSQLITE");
     db.setDatabaseName("db.sqlite");
-
 }
 
 void UserParser::parse()
@@ -29,6 +29,7 @@ void UserParser::parse()
         foreach(QString file, subdir.entryList(QDir::Files))
         {
             parseFile(subdir.absoluteFilePath(file));
+            QApplication::processEvents();
         }
     }
     db.close();
@@ -37,7 +38,7 @@ void UserParser::parse()
 void UserParser::addUser(UserInfo user)
 {
     QSqlQuery query;
-    qDebug() << query.exec("INSERT INTO \"Users\" ( \"id\",\"nickname\",\"create\",\"views\",\"likeput\",\"likegot\",\"posts\",\"ppd\",\"lastactivity\" ) \
+    query.exec("INSERT INTO \"Users\" ( \"id\",\"nickname\",\"create\",\"views\",\"likeput\",\"likegot\",\"posts\",\"ppd\",\"lastactivity\" ) \
 VALUES ( "+QString::number(user.id)+",\
 '"+user.nickname+"',\
 '"+QString::number(user.createtime.toTime_t())+"',\
@@ -47,6 +48,7 @@ VALUES ( "+QString::number(user.id)+",\
 '"+QString::number(user.posts)+"',\
 '"+QString::number(user.ppd)+"',\
 '"+QString::number(user.lastactivity.toTime_t())+"' )");
+    emit finished();
 }
 
 void UserParser::parseFile(const QString &fileName)
