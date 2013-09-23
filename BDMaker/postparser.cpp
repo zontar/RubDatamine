@@ -37,7 +37,7 @@ void PostParser::parse()
         {
             parseFile(subdir.absoluteFilePath(file));
             count++;
-            if(count>100)
+            if(count>64)
             {
                 db.commit();
                 count=0;
