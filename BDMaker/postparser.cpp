@@ -22,7 +22,7 @@ void PostParser::parse()
     }
     qDebug() << "successfully open db.sqlite";
     logFile.setFileName("postparser.log");
-    logFile.open(QIODevice::WriteOnly);
+    logFile.open(QIODevice::ReadWrite);
     log.setDevice(&logFile);
     QDir storage(QDir::currentPath());
     storage.cd("posts storage");
@@ -34,25 +34,36 @@ void PostParser::parse()
         {
             parseFile(subdir.absoluteFilePath(file));
             QApplication::processEvents();
+            if(errorCount>100) break;
+            log.flush();
+        }
+        if(errorCount>100)
+        {
+            emit stop();
+            break;
         }
     }
     db.close();
     logFile.close();
+    emit stop();
 }
 
 void PostParser::addPost(PostInfo post)
 {
-    qDebug() << "[Add post] id:" << post.id << "; time: " << post.create.toString("dd.MM.yyyy hh.mm") \
-             << "; author:" << post.author << "; thead:" << post.thread << "; likes:" << post.likes;
     QSqlQuery query;
-    query.exec("INSERT INTO \"Posts\" ( \"id\",\"author\",\"thread\",\"time\",\"likes\",\"text\" ) VALUES ( \
+    bool ret = query.exec("INSERT INTO \"Posts\" ( \"id\",\"author\",\"thread\",\"time\",\"likes\",\"text\" ) VALUES ( \
         '"+QString::number(post.id)+"',\
         '"+QString::number(post.author)+"',\
         '"+QString::number(post.thread)+"',\
         '"+QString::number(post.create.toTime_t())+"',\
         '"+QString::number(post.likes)+"',\
         '"+post.text+"' )");
+    if(!ret)
+    {
+        errorCount++;
+        log << "["<<post.id<<"] Cannot INSERT into Posts\n";
 
+    }
     emit finished();
 }
 
@@ -63,7 +74,7 @@ void PostParser::parseFile(const QString &fileName)
     if(!file.open(QIODevice::ReadOnly))
     {
         errorCount++;
-        log << "Cannot open "<<fileName;
+        log << "Cannot open "<<fileName<<"\n";
         return;
     }
     QString data = QString::fromLocal8Bit(file.readAll());
@@ -92,7 +103,7 @@ void PostParser::parseFile(const QString &fileName)
         else
         {
             errorCount++;
-            log << "["+ids+"] Thread <"+reg.cap(1)+"> not found!";
+            log << "["+ids+"] Thread <"+reg.cap(1)+"> not found!\n";
         }
     }
 
@@ -109,17 +120,16 @@ void PostParser::parseFile(const QString &fileName)
     else
     {
         errorCount++;
-        log << "["+ids+"] Cannot found creation date";
+        log << "["+ids+"] Cannot found creation date\n";
     }
 
-    reg.setPattern("post_message.*>\\s*(\\S.*)\\s</div>\\s*<!--");
+    reg.setPattern("post_message_\\d*\">\\s*(\\S.*)\\s</div>\\s*<!--");
     pos = reg.indexIn(data,pos+1);
-    qDebug() << reg.cap(1).size();
     if(pos!=-1) post.text = reg.cap(1);
     else
     {
         errorCount++;
-        log<<"["<<ids<<"] cannot found message";
+        log<<"["<<ids<<"] cannot found message\n";
     }
 
     reg.setPattern("post_thanks_box.*</table>");
@@ -148,7 +158,7 @@ void PostParser::parseFile(const QString &fileName)
                 if(!ret)
                 {
                     errorCount++;
-                    log<<"["+ids+"] cannot INSERT into Likes with user="<<reg.cap(1);
+                    log<<"["+ids+"] cannot INSERT into Likes with user="<<reg.cap(1)<<"\n";
                 }
             }
             post.likes = likes;
@@ -175,7 +185,7 @@ void PostParser::parseFile(const QString &fileName)
             if(!query.exec("SELECT id FROM Guests WHERE nickname = '"+nickname+"'"))
             {
                 errorCount++;
-                log<<"["+ids+"] cannot SELECT from Guests with nivkname="<<nickname;
+                log<<"["+ids+"] cannot SELECT from Guests with nivkname="<<nickname<<"\n";
             }
             if(query.next())
             {
@@ -184,14 +194,14 @@ void PostParser::parseFile(const QString &fileName)
             else
             {
                 errorCount++;
-                log<<"["+ids+"] cannot found author";
+                log<<"["+ids+"] cannot found author\n";
             }
         }
     }
     else
     {
         errorCount++;
-        log<<"["+ids+"] cannot found author block";
+        log<<"["+ids+"] cannot found author block\n";
     }
 
 

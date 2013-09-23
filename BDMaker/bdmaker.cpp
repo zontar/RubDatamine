@@ -11,6 +11,7 @@ BDMaker::BDMaker(QWidget *parent) :
     timer.setInterval(1000);
     connect(&parser,SIGNAL(finished()),this,SLOT(requestFinished()));
     connect(&timer,SIGNAL(timeout()),this,SLOT(onTimer()));
+    connect(&parser,SIGNAL(stop()),this,SLOT(on_pbStop_clicked()));
 
 //    createBD();
 }
@@ -57,7 +58,7 @@ void BDMaker::onTimer()
 
 void BDMaker::on_pbGo_clicked()
 {
-    totalCount = 6;
+    totalCount = 286239;
     ui->leTotal->setText(QString::number(totalCount));
     elapsedTime = finishedRequests = 0;
     timer.start();

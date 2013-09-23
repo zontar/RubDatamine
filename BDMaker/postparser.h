@@ -5,6 +5,7 @@
 #include <QtSql>
 #include <QVector>
 #include <QFile>
+#include <QTextStream>
 #include "common.h"
 
 class PostParser : public QObject
@@ -25,6 +26,7 @@ private:
 
 signals:
     void finished();
+    void stop();
 
 public slots:
 
