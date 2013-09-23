@@ -9,11 +9,9 @@ BDMaker::BDMaker(QWidget *parent) :
 {
     ui->setupUi(this);
     timer.setInterval(1000);
-    connect(&parser,SIGNAL(finished()),this,SLOT(requestFinished()));
+    connect(&parser,SIGNAL(requestComplite()),this,SLOT(requestFinished()));
     connect(&timer,SIGNAL(timeout()),this,SLOT(onTimer()));
-    connect(&parser,SIGNAL(stop()),this,SLOT(on_pbStop_clicked()));
-
-//    createBD();
+    connect(&parser,SIGNAL(stop(bool)),this,SLOT(parserStopped(bool)));
 }
 
 BDMaker::~BDMaker()
@@ -31,19 +29,21 @@ void BDMaker::createBD()
         return;
     }
     qDebug() << "successfully open db.sqlite";
+    db.transaction();
     QSqlQuery query;
-        query.exec("CREATE TABLE \"Likes\" (\"key\" INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE, \"user\" INTEGER, \"post\" INTEGER)");
-        query.exec("CREATE TABLE \"Posts\" (\"key\" INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE, \"id\" INTEGER UNIQUE, \"author\" INTEGER, \"thread\" INTEGER, \"time\" INTEGER, \"likes\" INTEGER, \"text\" TEXT)");
-        query.exec("CREATE TABLE \"Sections\" (\"key\" INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE, \"id\" INTEGER UNIQUE, \"name\" TEXT, \"parent\" INTEGER, \"threads\" INTEGER)");
-        query.exec("CREATE TABLE \"Threads\" (\"key\" INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE, \"id\" INTEGER UNIQUE, \"name\" TEXT, \"section\" INTEGER, \"author\" TEXT, \"create\" INTEGER, \"posts\" INTEGER)");
-        query.exec("CREATE TABLE \"Users\" (\"key\" INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE, \"id\" INTEGER UNIQUE, \"nickname\" TEXT, \"create\" INTEGER, \"views\" INTEGER, \"likeput\" INTEGER, \"likegot\" INTEGER, \"posts\" INTEGER, \"ppd\" REAL, \"lastactivity\" INTEGER)");
-        query.exec("CREATE INDEX \"PostIdIdx\" ON \"Posts\" (\"id\")");
-        query.exec("CREATE INDEX \"SectionsIdIdx\" ON \"Sections\" (\"id\")");
-        query.exec("CREATE INDEX \"ThreadIdIdx\" ON \"Threads\" (\"id\")");
-        query.exec("CREATE INDEX \"ThreadNameIdx\" ON \"Threads\" (\"name\")");
-        query.exec("CREATE INDEX \"UsersIdIdx\" ON \"Users\" (\"id\")");
-        query.exec("CREATE INDEX \"UsersNicknameIdx\" ON \"Users\" (\"nickname\")");
-        db.close();
+    query.exec("CREATE TABLE \"Guests\" (\"key\" INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE, \"id\" INTEGER UNIQUE, \"nickname\" TEXT)");
+    query.exec("CREATE TABLE \"Likes\" (\"key\" INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE, \"user\" INTEGER, \"post\" INTEGER)");
+    query.exec("CREATE TABLE \"Posts\" (\"key\" INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE, \"id\" INTEGER UNIQUE, \"author\" INTEGER, \"thread\" INTEGER, \"time\" INTEGER, \"likes\" INTEGER, \"text\" TEXT)");
+    query.exec("CREATE TABLE \"Sections\" (\"key\" INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE, \"id\" INTEGER UNIQUE, \"name\" TEXT, \"parent\" INTEGER, \"threads\" INTEGER)");
+    query.exec("CREATE TABLE \"Threads\" (\"key\" INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE, \"id\" INTEGER UNIQUE, \"name\" TEXT, \"section\" INTEGER, \"author\" INTEGER, \"create\" INTEGER, \"posts\" INTEGER)");
+    query.exec("CREATE TABLE \"Users\" (\"key\" INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE, \"id\" INTEGER UNIQUE, \"nickname\" TEXT, \"create\" INTEGER, \"views\" INTEGER, \"likeput\" INTEGER, \"likegot\" INTEGER, \"posts\" INTEGER, \"ppd\" REAL, \"lastactivity\" INTEGER)");
+    query.exec("CREATE INDEX \"PostIdIdx\" ON \"Posts\" (\"id\")");
+    query.exec("CREATE INDEX \"SectionsIdIdx\" ON \"Sections\" (\"id\")");
+    query.exec("CREATE INDEX \"ThreadNameIdx\" on \"Threads\" (\"name\")");
+    query.exec("CREATE INDEX \"UsersIdIdx\" ON \"Users\" (\"id\")");
+    query.exec("CREATE INDEX \"UsersNicknameIdx\" ON \"Users\" (\"nickname\")");
+    db.commit();
+    db.close();
 }
 
 void BDMaker::onTimer()
@@ -58,8 +58,7 @@ void BDMaker::onTimer()
 
 void BDMaker::on_pbGo_clicked()
 {
-    totalCount = 286239;
-    ui->leTotal->setText(QString::number(totalCount));
+    totalCount = ui->leTotal->text().toInt();
     elapsedTime = finishedRequests = 0;
     timer.start();
     parser.parse();
@@ -74,5 +73,10 @@ void BDMaker::requestFinished()
 {
     ++finishedRequests;
     ui->leParsed->setText(QString("%1 (%2%)").arg(finishedRequests).arg(((double)finishedRequests/totalCount)*100));
-    if(totalCount==finishedRequests) on_pbStop_clicked();
+}
+
+void BDMaker::parserStopped(bool success)
+{
+    Q_UNUSED(success);
+    timer.stop();
 }

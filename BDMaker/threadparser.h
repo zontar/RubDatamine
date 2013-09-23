@@ -1,29 +1,24 @@
 #ifndef THREADPARSER_H
 #define THREADPARSER_H
 
-#include <QObject>
-#include <QtSql>
-#include <QVector>
 #include "common.h"
+#include "abstractparser.h"
 
-class ThreadParser : public QObject
+class ThreadParser : public AbstractParser
 {
     Q_OBJECT
 public:
     explicit ThreadParser(QObject *parent = 0);
+    ~ThreadParser();
     void parse();
+
+protected:
+    void prepare();
+
 private:
-    QSqlDatabase db;
-    QVector<QString> guests;
     void addThread(ThreadInfo thread);
     void parseFile(const QString &fileName);
-    void makeGuests();
-
-signals:
-    void finished();
-
-public slots:
-
+    int nextGuestId;
 };
 
 #endif // THREADPARSER_H

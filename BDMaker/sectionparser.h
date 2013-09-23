@@ -1,26 +1,19 @@
 #ifndef SECTIONPARSER_H
 #define SECTIONPARSER_H
 
-#include <QObject>
-#include <QtSql>
+#include "abstractparser.h"
 #include "common.h"
 
-class SectionParser : public QObject
+class SectionParser : public AbstractParser
 {
     Q_OBJECT
 public:
     explicit SectionParser(QObject *parent = 0);
-    void parse();
+    ~SectionParser();
+
 private:
-    QSqlDatabase db;
     void addSection(SectionInfo section);
     void parseFile(const QString &fileName);
-
-signals:
-    void finished();
-
-public slots:
-
 };
 
 #endif // SECTIONPARSER_H

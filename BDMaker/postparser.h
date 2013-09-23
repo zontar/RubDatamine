@@ -1,36 +1,22 @@
 #ifndef POSTPARSER_H
 #define POSTPARSER_H
 
-#include <QObject>
-#include <QtSql>
-#include <QVector>
-#include <QFile>
-#include <QTextStream>
+#include "abstractparser.h"
 #include "common.h"
 
-class PostParser : public QObject
+class PostParser : public AbstractParser
 {
     Q_OBJECT
 public:
     explicit PostParser(QObject *parent = 0);
-    void parse();
+    ~PostParser();
+    void prepare();
+
 private:
-    QSqlDatabase db;
-    QVector<QString> guests;
-    QFile logFile;
-    QTextStream log;
-    int errorCount;
-    int currentGuestId;
     void addPost(PostInfo thread);
     void parseFile(const QString &fileName);
-    void makeGuests();
 
-signals:
-    void finished();
-    void stop();
-
-public slots:
-
+    int nextGuestId;
 };
 
 #endif // POSTPARSER_H

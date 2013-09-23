@@ -4,7 +4,7 @@
 #include <QMainWindow>
 #include <QtSql>
 #include <QTime>
-#include "postparser.h"
+#include "sectionparser.h"
 
 namespace Ui {
 class BDMaker;
@@ -20,7 +20,7 @@ public:
 
 private:
     Ui::BDMaker *ui;
-    PostParser parser;
+    SectionParser parser;
     QTimer timer;
     int elapsedTime;
     int finishedRequests;
@@ -31,6 +31,7 @@ protected slots:
     void on_pbGo_clicked();
     void on_pbStop_clicked();
     void requestFinished();
+    void parserStopped(bool success);
 };
 
 #endif // BDMAKER_H

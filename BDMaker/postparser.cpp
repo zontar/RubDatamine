@@ -1,62 +1,31 @@
 #include "postparser.h"
 #include <QRegExp>
-#include <QFile>
-#include <QDir>
-#include <QTextCodec>
-#include <QApplication>
+#include <QSqlQuery>
+#include <QSqlError>
+
 #include <QDebug>
 
 PostParser::PostParser(QObject *parent) :
-    QObject(parent)
+    AbstractParser(parent)
 {
-    db = QSqlDatabase::addDatabase("QSQLITE");
-    db.setDatabaseName("db.sqlite");
+    logFileName = "post.log";
+    storageDir = "posts storage";
 }
 
-void PostParser::parse()
+PostParser::~PostParser()
 {
-    currentGuestId = -37;
-    if(!db.open())
+
+}
+
+void PostParser::prepare()
+{
+    QSqlQuery query;
+    query.exec("SELECT MIN(id) FROM Guests");
+    if(query.next()) nextGuestId = query.value(0).toInt()-1;
+    else
     {
-        qDebug() << "cannot open db.sqlite";
-        return;
+        nextGuestId = -1;
     }
-    qDebug() << "successfully open db.sqlite";
-    logFile.setFileName("postparser.log");
-    logFile.open(QIODevice::ReadWrite);
-    log.setDevice(&logFile);
-    QDir storage(QDir::currentPath());
-    storage.cd("posts storage");
-    errorCount = 0;
-    int count=0;
-    db.transaction();
-    foreach(QString dir, storage.entryList(QDir::Dirs | QDir::NoDotAndDotDot))
-    {
-        QDir subdir(storage.absoluteFilePath(dir));
-        foreach(QString file, subdir.entryList(QDir::Files))
-        {
-            parseFile(subdir.absoluteFilePath(file));
-            count++;
-            if(count>64)
-            {
-                db.commit();
-                count=0;
-                db.transaction();
-            }
-            QApplication::processEvents();
-            if(errorCount>100) break;
-            log.flush();
-        }
-        if(errorCount>100)
-        {
-            emit stop();
-            break;
-        }
-    }
-    db.commit();
-    db.close();
-    logFile.close();
-    emit stop();
 }
 
 void PostParser::addPost(PostInfo post)
@@ -74,20 +43,20 @@ void PostParser::addPost(PostInfo post)
     if(!query.exec())
     {
         errorCount++;
-        log << "["<<post.id<<"] Cannot INSERT into Posts ("<<query.lastError().text()<<");\n";
-
+        log(post.id,"Cannot INSERT into Posts. "+query.lastError().text());
     }
-    emit finished();
+    emit requestComplite();
 }
 
 void PostParser::parseFile(const QString &fileName)
 {
+    QString ids = fileName.section('/',-1);
     // read file
     QFile file(fileName);
     if(!file.open(QIODevice::ReadOnly))
     {
         errorCount++;
-        log << "Cannot open "<<fileName<<"\n";
+        log(ids,"Cannot open "+fileName);
         return;
     }
     QString data = QString::fromLocal8Bit(file.readAll());
@@ -98,31 +67,46 @@ void PostParser::parseFile(const QString &fileName)
     reg.setPatternSyntax(QRegExp::RegExp2);
     reg.setMinimal(true);
     int pos=0;
+
     PostInfo post;
-    QString ids = fileName.section('/',-1);
+
     post.id = ids.toInt();
 
+    //Post thread block
     reg.setPattern("<strong>Тема</strong>.*>(.*)</a>");
     pos = reg.indexIn(data,6000); // skip css data
     if(pos!=-1)
     {
         QSqlQuery query;
-        query.exec("SELECT id FROM Threads WHERE name =\""+reg.cap(1)+"\"");
-        if(query.next())
+        query.prepare("SELECT id FROM Threads WHERE name = :name");
+        query.bindValue(":name",reg.cap(1));
+        if(query.exec())
         {
-            post.thread = query.value(0).toInt();
             if(query.next())
             {
-                log<<"["+ids+"] Thread <"+reg.cap(1)+"> has more then one id's!\n";
+                post.thread = query.value(0).toInt();
+                if(query.next())
+                {
+                    log(ids,"Thread <"+reg.cap(1)+"> has more then one id's!"); // not error, but bullshit
+                }
+            }
+            else
+            {
+                errorCount++;
+                post.thread = 0;
+                log(ids,"Thread <"+reg.cap(1)+"> not found!");
             }
         }
         else
         {
             errorCount++;
-            log << "["+ids+"] Thread <"+reg.cap(1)+"> not found!\n";
+            post.thread = 0;
+            log(ids,"Cannot SELECT from Threads. "+query.lastError().text());
         }
     }
+    //--Post thread block
 
+    //Post create time block
     reg.setPattern("date -->.*\\s(\\S*),\\s(\\d\\d):(\\d\\d)");
     pos = reg.indexIn(data,pos+reg.cap().size());
     if(pos!=-1)
@@ -136,18 +120,23 @@ void PostParser::parseFile(const QString &fileName)
     else
     {
         errorCount++;
-        log << "["+ids+"] Cannot found creation date\n";
+        post.create = QDateTime::fromTime_t(0);
+        log(ids,"Cannot found creation date");
     }
+    //--Post create time block
 
+    //Post text block
     reg.setPattern("post_message_\\d*\">\\s*(\\S.*)\\s</div>\\s*<!--");
     pos = reg.indexIn(data,pos+reg.cap().size());
     if(pos!=-1) post.text = reg.cap(1);
     else
     {
         errorCount++;
-        log<<"["<<ids<<"] cannot found message\n";
+        log(ids,"Cannot found post text");
     }
+    //--Post text block
 
+    //Post likes block
     reg.setPattern("post_thanks_box.*</table>");
     pos = reg.indexIn(data,pos+reg.cap().size());
     if(pos!=-1)
@@ -168,13 +157,13 @@ void PostParser::parseFile(const QString &fileName)
                 if(lp==-1) continue;
                 likes++;
                 QSqlQuery query;
-                bool ret = query.exec("INSERT INTO \"Likes\" ( \"user\",\"post\" ) VALUES ( \
-                           \""+reg.cap(1)+"\",\
-                           '"+ids+"')");
-                if(!ret)
+                query.prepare("INSERT INTO \"Likes\" ( \"user\",\"post\" ) VALUES ( :user, :post )");
+                query.bindValue(":user",reg.cap(1));
+                query.bindValue(":post",ids);
+                if(!query.exec())
                 {
                     errorCount++;
-                    log<<"["+ids+"] cannot INSERT into Likes with user="<<reg.cap(1)<<"\n";
+                    log(ids,"Cannot INSERT into Likes with user="+reg.cap(1)+". "+query.lastError().text());
                 }
             }
             post.likes = likes;
@@ -185,8 +174,9 @@ void PostParser::parseFile(const QString &fileName)
         }
     }
     else post.likes = 0;
+    //--Post likes block
 
-
+    //Post author block
     reg.setPattern("popup menu.*thead\">(.*)</td>");
     pos = reg.indexIn(data);
     if(pos!=-1)
@@ -194,35 +184,40 @@ void PostParser::parseFile(const QString &fileName)
         QString nickname = reg.cap(1);
         reg.setPattern("u=(\\d*)\"");
         pos = reg.indexIn(data,pos+reg.cap().size());
-        if(pos!=-1) post.author = reg.cap(1).toInt();
+        if(pos!=-1) post.author = reg.cap(1).toInt(); // registered user
         else
-        {
+        {   //guest
             QSqlQuery query;
-            if(!query.exec("SELECT id FROM Guests WHERE nickname = '"+nickname+"'"))
+            // try to find existing guest
+            query.prepare("SELECT id FROM Guests WHERE nickname = :nick");
+            query.bindValue(":nick",nickname);
+            if(!query.exec())
             {
                 errorCount++;
-                log<<"["+ids+"] cannot SELECT from Guests with nickname="<<nickname<<"\n";
+                log(ids,"Cannot SELECT from Guests with nickname="+nickname+". "+query.lastError().text());
             }
             else
             {
-                if(query.next())
+                if(query.next()) // existing guest
                 {
                     post.author = query.value(0).toInt();
                 }
                 else
                 {
-                    bool ret = query.exec("INSERT INTO \"Guests\" ( \"id\",\"nickname\" ) VALUES ( \
-                        \""+QString::number(currentGuestId)+"\",\
-                            '"+nickname+"' )");
-                    if(!ret)
+                    // try to add new guest
+                    query.prepare("INSERT INTO \"Guests\" ( \"id\",\"nickname\" ) VALUES ( :id, :nick )");
+                    query.bindValue(":id",nextGuestId);
+                    query.bindValue(":nick",nickname);
+                    if(!query.exec())
                     {
                         errorCount++;
-                        log<<"["+ids+"] cannot INSERT into Guests. id:"<<currentGuestId<<"; nickname="<<nickname<<";\n";
+                        post.author = 0;
+                        log(ids,"Cannot INSERT into Guests. id="+QString::number(nextGuestId)+"; nickname="+nickname+"."+query.lastError().text());
                     }
                     else
                     {
-                        post.author=currentGuestId;
-                        currentGuestId--;
+                        post.author = nextGuestId;
+                        nextGuestId--;
                     }
                 }
             }
@@ -231,7 +226,10 @@ void PostParser::parseFile(const QString &fileName)
     else
     {
         errorCount++;
-        log<<"["+ids+"] cannot found author block\n";
+        post.author = 0;
+        log(ids,"Cannot found author block");
     }
+    //--Post author block
+
     addPost(post);
 }
