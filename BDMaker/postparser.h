@@ -20,6 +20,7 @@ private:
     QFile logFile;
     QTextStream log;
     int errorCount;
+    int currentGuestId;
     void addPost(PostInfo thread);
     void parseFile(const QString &fileName);
     void makeGuests();
