@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QtSql>
+#include <QVector>
 #include "common.h"
 
 class ThreadParser : public QObject
@@ -13,8 +14,10 @@ public:
     void parse();
 private:
     QSqlDatabase db;
+    QVector<QString> guests;
     void addThread(ThreadInfo thread);
     void parseFile(const QString &fileName);
+    void makeGuests();
 
 signals:
     void finished();
