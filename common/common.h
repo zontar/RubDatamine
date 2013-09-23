@@ -32,3 +32,13 @@ struct ThreadInfo
     QDateTime create;
     int posts;
 };
+
+struct PostInfo
+{
+    int id;
+    int author;
+    int thread;
+    QDateTime create;
+    int likes;
+    QString text;
+};

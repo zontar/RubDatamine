@@ -57,7 +57,7 @@ void BDMaker::onTimer()
 
 void BDMaker::on_pbGo_clicked()
 {
-    totalCount = 10844;
+    totalCount = 6;
     ui->leTotal->setText(QString::number(totalCount));
     elapsedTime = finishedRequests = 0;
     timer.start();
