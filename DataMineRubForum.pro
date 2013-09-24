@@ -3,4 +3,5 @@ TEMPLATE = subdirs
 SUBDIRS += \
     ThreadIdFixer \
     Downloader \
-    BDMaker
+    BDMaker \
+    DataGenerator
