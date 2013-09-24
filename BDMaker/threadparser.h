@@ -10,7 +10,6 @@ class ThreadParser : public AbstractParser
 public:
     explicit ThreadParser(QObject *parent = 0);
     ~ThreadParser();
-    void parse();
 
 protected:
     void prepare();

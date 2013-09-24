@@ -9,7 +9,7 @@ ThreadParser::ThreadParser(QObject *parent) :
     AbstractParser(parent)
 {
     logFileName = "thread.log";
-    storageDir = "theads storage";
+    storageDir = "threads storage";
 }
 
 ThreadParser::~ThreadParser()
