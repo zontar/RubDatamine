@@ -96,7 +96,7 @@ void ThreadIdFixer::on_pbGo_clicked()
         {
             ui->teLog->append("<!> other error: "+line);
         }
-
+        QApplication::processEvents();
     }
     file.close();
 }
